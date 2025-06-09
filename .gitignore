@@ -2,4 +2,5 @@ node_modules/
 credentials.json
 !.env.example
 .env
+token.json
 
