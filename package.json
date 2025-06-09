@@ -1,0 +1,23 @@
+{
+  "name": "google-api-transfer-ownership",
+  "version": "1.0.0",
+  "description": "## Researching",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uncomfyhalomacro/google-api-transfer-ownership.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/uncomfyhalomacro/google-api-transfer-ownership/issues"
+  },
+  "homepage": "https://github.com/uncomfyhalomacro/google-api-transfer-ownership#readme",
+  "dependencies": {
+    "@google-cloud/local-auth": "^2.1.0",
+    "googleapis": "^105.0.0"
+  }
+}
