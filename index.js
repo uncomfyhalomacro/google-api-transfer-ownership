@@ -7,7 +7,7 @@ const readline = require("node:readline");
 
 // If modifying these scopes, delete token.json.
 const SCOPES = [
-  "https://www.googleapis.com/auth/drive.metadata.readonly",
+  "https://www.googleapis.com/auth/drive.metadata",
   "https://www.googleapis.com/auth/drive.file",
   "https://www.googleapis.com/auth/drive",
 ];
@@ -109,7 +109,11 @@ async function transferOwnership(authClient) {
     fields: "nextPageToken, files(id, name, owners)",
   });
   const files = res.data.files;
+
   let targetFile;
+  let permission;
+  let result;
+
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -122,9 +126,32 @@ async function transferOwnership(authClient) {
     } else {
       console.error("File not found.");
     }
+    const rl2 = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    rl2.question("Transfer to whom?\n", (targetOwner) => {
+      permission = {
+        type: "user",
+        role: "writer",
+        emailAddress: targetOwner,
+        pendingOwner: true,
+      };
+      result = drive.permissions.create({
+        emailMessage: "sending you this file",
+        sendNotificationEmail: true,
+        moveToNewOwnersRoot: true,
+        fileId: targetFile.id,
+        requestBody: permission,
+        transferOwnership: false,
+      });
+      rl2.close();
+    });
     rl.close();
   });
+  const awaitedResult = await result;
+  console.log(awaitedResult);
 }
 
-authorize().then(listFiles).catch(console.error);
+// authorize().then(listFiles).catch(console.error);
 authorize().then(transferOwnership).catch(console.error);
