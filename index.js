@@ -3,8 +3,10 @@ const path = require("path");
 const process = require("process");
 const { authenticate } = require("@google-cloud/local-auth");
 const { google } = require("googleapis");
-const readline = require("node:readline");
+const readline = require("readline-sync");
 
+const filename = readline.question("What is the filename?\n");
+const targetEmail = readline.question("What is the email address for new owner?\n");
 // If modifying these scopes, delete token.json.
 const SCOPES = [
   "https://www.googleapis.com/auth/drive.metadata",
@@ -114,43 +116,44 @@ async function transferOwnership(authClient) {
   let permission;
   let result;
 
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
+  targetFile = files.find((file) => file.name === filename);
+  if (targetFile) {
+    console.log(`${targetFile.name} (${targetFile.id})`);
+  } else {
+    console.error("File not found.");
+  }
+  let newOwnerEmail;
+  permission = {
+    type: "user",
+    role: "writer",
+    emailAddress: targetEmail,
+    pendingOwner: true,
+  };
+  result = await drive.permissions.create({
+    emailMessage: "sending you this file",
+    sendNotificationEmail: true,
+    moveToNewOwnersRoot: true,
+    fileId: targetFile.id,
+    requestBody: permission,
   });
-  rl.question(`What's the filename?\n`, (filename) => {
-    targetFile = files.find((file) => file.name === filename);
-    if (targetFile) {
-      console.log(`${targetFile.name} (${targetFile.id})`);
-      rl.close();
-    } else {
-      console.error("File not found.");
-    }
-    const rl2 = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-    rl2.question("Transfer to whom?\n", (targetOwner) => {
-      permission = {
-        type: "user",
-        role: "writer",
-        emailAddress: targetOwner,
+  const res1 = await drive.permissions.list({
+    fileId: targetFile.id,
+    supportsAllDrives: true,
+    pageSize: 100,
+    fields: "*",
+  });
+  const needlePermission = res1.data.permissions.find(
+    ({ emailAddress }) => emailAddress == targetEmail,
+  );
+  const final_result = await drive.permissions.update({
+    fileId: targetFile.id,
+    permissionId: result.data.id,
+    requestBody: {
         pendingOwner: true,
-      };
-      result = drive.permissions.create({
-        emailMessage: "sending you this file",
-        sendNotificationEmail: true,
-        moveToNewOwnersRoot: true,
-        fileId: targetFile.id,
-        requestBody: permission,
-        transferOwnership: false,
-      });
-      rl2.close();
-    });
-    rl.close();
+        role: "writer",
+    },
   });
-  const awaitedResult = await result;
-  console.log(awaitedResult);
+  console.log(final_result);
 }
 
 // authorize().then(listFiles).catch(console.error);
